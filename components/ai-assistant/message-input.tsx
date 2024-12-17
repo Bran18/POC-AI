@@ -1,22 +1,32 @@
-'use client'
+"use client";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {useRef, useEffect, useState} from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { SendHorizontal, StopCircle, Paperclip, ArrowUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import {Switch} from '@/components/ui/switch';
-import {Label} from '@/components/ui/label';
-
-interface MessageInputProps {
-  input: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  isLoading: boolean;
-  onStop: () => void;
-}
+import { useRef, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  SendHorizontal,
+  StopCircle,
+  Paperclip,
+  ArrowUp,
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import type { MessageInputProps } from "@/types/project";
+import { useProject } from "@/contexts/ProjectContext";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
 
 export default function MessageInput({
   input,
@@ -28,45 +38,95 @@ export default function MessageInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const { projects, selectedProject, setSelectedProject } = useProject();
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Auto-resize textarea
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
+  useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   }, [input]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (input.trim()) {
+      if (input.trim() && selectedProject) {
         handleSubmit(e);
       }
     }
   };
 
+  const handleProjectSelect = (value: string) => {
+    const project = projects.find((p) => p.value === value);
+    setSelectedProject(project || null);
+    setPopoverOpen(false);
+  };
+
   return (
     <div className="relative w-full mt-2">
-      {/* Optional disclaimer */}
       <div className="absolute -top-6 left-0 right-0 text-center">
         <span className="text-xs text-muted-foreground">
           AI responses are generated. Please verify important information.
         </span>
       </div>
 
-           {/* Mode Switch */}
-           <div className="flex items-center justify-end space-x-2 p-4">
-        <Label htmlFor="advanced-mode" className="text-sm text-gray-500">
-          Advanced Mode
-        </Label>
-        <Switch
-          id="advanced-mode"
-          checked={isAdvancedMode}
-          onCheckedChange={setIsAdvancedMode}
-        />
+      <div className="flex items-center justify-between p-4">
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              // biome-ignore lint/a11y/useSemanticElements: <explanation>
+              role="combobox"
+              aria-expanded={popoverOpen}
+              className="w-[200px] justify-between"
+            >
+              {selectedProject ? selectedProject.label : "Select project..."}
+              <ChevronsUpDown className="opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search projects..." className="h-9" />
+              <CommandList>
+                <CommandEmpty>No project found.</CommandEmpty>
+                <CommandGroup>
+                  {projects.map((project) => (
+                    <CommandItem
+                      key={project.value}
+                      value={project.value}
+                      onSelect={handleProjectSelect}
+                    >
+                      {project.label}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedProject?.value === project.value
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <div className="flex items-center space-x-2">
+          <Label htmlFor="advanced-mode" className="text-sm text-gray-500">
+            Advanced Mode
+          </Label>
+          <Switch
+            id="advanced-mode"
+            checked={isAdvancedMode}
+            onCheckedChange={setIsAdvancedMode}
+          />
+        </div>
       </div>
 
       <form
@@ -97,7 +157,7 @@ export default function MessageInput({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
-        
+
         <AnimatePresence mode="wait">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}

@@ -3,16 +3,39 @@ import { tool } from "ai";
 import { z } from "zod";
 
 export const gitBookSearchTool = tool({
-  description: "Fetches information from GitBook based on a query.",
+  description:
+    "Fetches information from GitBook based on a query and project selection.",
   parameters: z.object({
     query: z.string().min(1).describe("The search query for GitBook."),
+    project: z
+      .object({
+        value: z.string().describe("The project identifier"),
+        label: z.string().describe("The project name"),
+      })
+      .describe("The selected project information"),
   }),
-  execute: async ({ query }) => {
-    const GITBOOK_SPACE_ID = process.env.GITBOOK_SPACE_ID;
-    const GITBOOK_API_TOKEN = process.env.GITBOOK_API_TOKEN;
+  execute: async ({ query, project }) => {
+    let GITBOOK_SPACE_ID: string | undefined;
+    let GITBOOK_API_TOKEN: string | undefined;
+
+    // Set the correct environment variables based on project
+    switch (project.value) {
+      case "kindfi":
+        GITBOOK_SPACE_ID = process.env.GITBOOK_KF_SPACE_ID;
+        GITBOOK_API_TOKEN = process.env.GITBOOK_KF_API_TOKEN;
+        break;
+      case "trustless":
+        GITBOOK_SPACE_ID = process.env.GITBOOK_TL_SPACE_ID;
+        GITBOOK_API_TOKEN = process.env.GITBOOK_TL_API_TOKEN;
+        break;
+      default:
+        throw new Error(`Unknown project: ${project.value}`);
+    }
 
     if (!GITBOOK_SPACE_ID || !GITBOOK_API_TOKEN) {
-      throw new Error("GitBook credentials are not properly configured");
+      throw new Error(
+        `GitBook credentials are not properly configured for ${project.label}`
+      );
     }
 
     try {
@@ -46,8 +69,10 @@ export const gitBookSearchTool = tool({
         ),
       };
     } catch (error) {
-      console.error("GitBook search error:", error);
-      throw new Error("Failed to fetch information from GitBook");
+      console.error(`GitBook search error for ${project.label}:`, error);
+      throw new Error(
+        `Failed to fetch information from ${project.label} GitBook`
+      );
     }
   },
 });

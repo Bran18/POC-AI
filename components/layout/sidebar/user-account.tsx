@@ -74,7 +74,7 @@ export const UserAccount = () => {
       <Button
         variant="ghost"
         className="relative w-full justify-start px-2"
-        onClick={() => router.push("/sign-in")}
+        onClick={() => router.push("/login")}
       >
         <Avatar className="h-8 w-8">
           <AvatarFallback>

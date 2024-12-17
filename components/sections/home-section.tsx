@@ -22,7 +22,7 @@ export default function LandingPage() {
     <div className="space-y-16 py-8">
       {/* Hero Section */}
       <section className="text-center space-y-6">
-        <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#252838] to-[#7cc635]">
+        <h1 className="text-4xl py-10 md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#252838] to-[#7cc635]">
           Your AI-Powered <br/>Product Knowledge Assistant
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -182,11 +182,13 @@ export default function LandingPage() {
           Trustless Work integrations.
         </p>
         <div className="flex gap-4 justify-center">
-          <Button size="lg" className="gap-2">
-            Try the AI Chat <ArrowRight className="h-4 w-4" />
+          <Button asChild size="lg" className="gap-2">
+            <Link href="/ai-assistant">
+              Try the AI Chat <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
-          <Button size="lg" variant="outline">
-            Explore the Library
+          <Button asChild size="lg" variant="outline">
+            <Link href="/library">Explore the Knowledge Base</Link>
           </Button>
         </div>
       </section>

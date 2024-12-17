@@ -6,12 +6,27 @@ import { gitBookSearchTool } from "@/app/tools/gitBookSearchTool";
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json();
+    const body = await request.json();
+    const { messages, selectedProject } = body;
+
+    if (!selectedProject) {
+      return NextResponse.json(
+        { error: "No project selected" },
+        { status: 400 }
+      );
+    }
 
     const filteredMessages = messages.filter(
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       (m: any) => m.content.trim() !== ""
     );
+
+    // Add project information to the last message
+    const lastMessage = filteredMessages[filteredMessages.length - 1];
+    if (lastMessage) {
+      lastMessage.project = selectedProject;
+    }
+
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: filteredMessages,
@@ -20,7 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     return result.toDataStreamResponse();
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   } catch (error: any) {
     console.error("Error:", error);
     return NextResponse.json(
